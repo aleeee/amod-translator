@@ -59,7 +59,7 @@ This function creates a dictionary that maps each node to an index
 to be used in matrices.
 """
 def createNodeIndexer(nodes):
-	indexes = [x for x in range(len(nodes))]
+	indexes = [x+1 for x in range(len(nodes))] #because MATLAB indexes start from 1
 	return dict(((node.id,x) for x,node in zip(indexes,nodes)))
 
 """
@@ -116,11 +116,13 @@ def parseNetwork(filename):
 		for element in links:
 			f.write(str(element))
 	
-	#traveltimes = createTravelTimeMatrix(nodes, roads, indexer)
+	traveltimes = createTravelTimeMatrix(nodes, roads, indexer)
+	capacities = createCapacityMatrix(nodes, roads, indexer)
 
 	#TO DO: Figure out what format the output should be in
 	filename = filename[:-4] + ".mat"
-	sio.savemat(filename, {'RoadGraph': links})
+	sio.savemat(filename, {'RoadGraph': links, 'CapacityMatrix': capacities, \
+						   'TravelTimes': traveltimes})
 
 if __name__ == "__main__":
 	parseNetwork(sys.argv[1])
