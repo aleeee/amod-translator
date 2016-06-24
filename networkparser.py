@@ -14,7 +14,7 @@ import scipy.io as sio
 
 #namedtuple containing link information
 link = namedtuple("link", "start finish capacity speed length")
-nodetuple = namedtuple("node", "id x y")
+nodetuple = namedtuple("node", "id long lat")
 
 """
 Function: parseNodes
@@ -59,7 +59,7 @@ This function creates a dictionary that maps each node to an index
 to be used in matrices.
 """
 def createNodeIndexer(nodes):
-	indexes = [x+1 for x in range(len(nodes))] #because MATLAB indexes start from 1
+	indexes = [x for x in range(len(nodes))] 
 	return dict(((node.id,x) for x,node in zip(indexes,nodes)))
 
 """
@@ -92,6 +92,21 @@ def createCapacityMatrix(nodes, links, indexer):
 	return matrix
 
 """
+Function: createNodeLocationsMatrix
+This function takes in a list of nodes and returns an Nx2 matrix
+containing the latitudes and longitudes of each node. Note: latitude
+comes first in the pairing even though it is the "y" coordinate in the
+network.xml files
+"""
+def createNodeLocationsMatrix(nodes):
+	locations = np.zeros((len(nodes), 2))
+	for i, node in enumerate(nodes):
+		locations[i][0] = node.lat
+		locations[i][1] = node.long
+
+	return locations
+
+"""
 Function: parseNetwork
 This function takes in the name of an xml file that will be converted
 into a graph for MATLab to work with.
@@ -109,7 +124,6 @@ def parseNetwork(filename):
 			links = np.zeros(len(nodes), dtype=object) #empty array which will eventually be converted to cell
 			for i in range(len(links)): #initialize each entry to be an empty list
 				links[i] = []
-			links1 = parseLinks1(graph, child)
 			links, roads = parseLinks(links, child, indexer)
 
 	with open('test.txt', 'w') as f:
@@ -118,11 +132,14 @@ def parseNetwork(filename):
 	
 	traveltimes = createTravelTimeMatrix(nodes, roads, indexer)
 	capacities = createCapacityMatrix(nodes, roads, indexer)
+	locations = createNodeLocationsMatrix(nodes)
+	
+	print(locations)
 
 	#TO DO: Figure out what format the output should be in
 	filename = filename[:-4] + ".mat"
 	sio.savemat(filename, {'RoadGraph': links, 'CapacityMatrix': capacities, \
-						   'TravelTimes': traveltimes})
+						   'TravelTimes': traveltimes, 'Locations': locations})
 
 if __name__ == "__main__":
 	parseNetwork(sys.argv[1])
